@@ -1,0 +1,14 @@
+Features from slides:
+Overlap
+Dependency tree (Chris)
+PS tree (Chris)
+Tree paths (Chris)
+Mention Level
+Semantic resources (Chris)
+Entity type
+Base NP chunking
+Words between (binning?)
+
+Other possible features:
+Word clusters (Chris)
+External knowledge sources
