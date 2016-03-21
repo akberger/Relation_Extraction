@@ -49,7 +49,7 @@ class RelationFeatureExtractor(object):
                          #self.last_word_before_w2
                          ]
 
-    def make_cluster_dict(cfile):
+    def make_cluster_dict(self, cfile):
         clusterdict = {}
         with open(cfile) as clusters:
             for line in clusters:
