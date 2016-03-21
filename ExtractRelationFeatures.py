@@ -5,6 +5,7 @@ Format data for MaxEnt classifer
 import sys
 import os
 from collections import defaultdict
+from nltk.corpus import gazetteers, names
 
 class RelationFeatureExtractor(object):
 	"""
@@ -26,16 +27,24 @@ class RelationFeatureExtractor(object):
 						"it", "its", "itself", "we", "us", "our", "ours", "ourselves", "you", "your", 
 						"yours", "yourselves", "they", "them", "their", "theirs", "themselves"]
 
+		self.locations = set([c.lower() for c in gazetteers.words('countries.txt')] + 
+							 [s.lower() for s in gazetteers.words('usstates.txt')])
+		self.names = set([name.lower() for name in names.words('male.txt')] +
+                		 [name.lower() for name in names.words('female.txt')])
+
 		self.feat_fns = [self.words,	#good
 						 self.word_types, #good
 						 self.pronoun, #good
+						 self.name, #good
+						 #self.place, #look to get a better list
 						 self.num_words_between, #good
 						 self.words_between_words, #good
 						 self.prev_word, #good
 						 #self.post_word, #really bad feature
 						 #self.prev_word_pos, #bad
 						 self.post_word_pos, #good
-						 self.first_word_after_w1 #good
+						 self.first_word_after_w1, #good
+						 self.words_between_POSs, #good 
 						 ]
 	
 	def process_tokens_dir(self, tokens_dir):
@@ -77,10 +86,12 @@ class RelationFeatureExtractor(object):
 			.gold files have relation type as first index, but .raw don't
 			"""
 			return ["w1={0}".format(rel[-7]), "w2={0}".format(rel[-1])]
+			#return ["wds={0}-{1}".format(rel[-7], rel[-1])]
 
 	def word_types(self, rel):
 		"""extracts the type of the words in the relation"""
 		return ["t1={0}".format(rel[-9]), "t2={0}".format(rel[-3])]
+		#return ["wdtyps={0}-{1}".format(rel[-9], rel[-3])]
 
 	def pronoun(self, rel):
 		p = []
@@ -88,6 +99,24 @@ class RelationFeatureExtractor(object):
 			p.append("w1=PRN")
 		if rel[-7] in self.pronouns:
 			p.append("w2=PRN")
+		return p
+
+	def name(self, rel):
+		n = []
+		w1 = rel[-7].split('_')
+		w2 = rel[-1].split('_')
+		for i, w in enumerate([w1, w2]):
+			if w[0] in self.names:
+				n.append("{0}=NAME".format(str(i)))
+		return n
+
+	def place(self, rel):
+		p = []
+		w1 = ' '.join(rel[-7].split('_'))
+		w2 = ' '.join(rel[-1].split('_'))
+		for i, w in enumerate([w1, w2]):
+			if w in self.locations:
+				p.append('{0}=PLACE'.format(str(i)))
 		return p
 
 	def num_words_between(self, rel):
@@ -100,6 +129,10 @@ class RelationFeatureExtractor(object):
 		btwn_wds = self.tokenized_sents[relID][rel_index][w1_index + 1 : w2_index]
 		return ["bwtnwds={0}".format(''.join(btwn_wds))]
 
+	def words_between_POSs(self, rel):
+		relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+		btwn_pos = self.tok_sents_pos[relID][rel_index][w1_index + 1 : w2_index]
+		return ["btwnpos={0}".format(''.join(btwn_pos))]
 
 	def prev_word(self, rel):
 		relID, rel_index, w1_index, w2_index = self.get_indices(rel)
@@ -138,7 +171,10 @@ class RelationFeatureExtractor(object):
 		word = self.tokenized_sents[relID][rel_index][w1_index+1]
 		return ["w1pst={0}".format(word)]
 
-
+	def mentions_between(self, rel, sent_mentions):
+		relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+		mtns_bwtn = abs(sent_mentions.index(w2_index) - sent_mentions.index(w1_index))
+		return ["mtnsbtwn={0}".format(str(mtns_bwtn))]
 
 	def featurize(self, parsed_files=None, postagged_files=None):
 		"""
@@ -151,21 +187,50 @@ class RelationFeatureExtractor(object):
 		if postagged_files:
 			self.feat_fns.append(self.postagged_files)
 
-		relations = open(self.corpus)
-		for i, line in enumerate(relations):
+		rels = open(self.corpus)
+		sent_num = 0
+		sent_rels = []
+		sent_mentions = []
+
+		for i, line in enumerate(rels):
 			line = line.split()
-			rel_feats = list()
+			sent = line[-12]
+			if sent is not sent_num: #we are on a new sentence, get feats from prev
+				sent_num = sent
+				if sent_num:
+					#get features from prev sentence
+					sent_mentions = sorted(set(sent_mentions))
+					self.get_rel_features(sent_rels, sent_mentions)
+					#clear for next sentence
+					sent_rels = []
+					sent_mentions = []
+					#add first line in new sentence
+					sent_rels.append(line)
+					sent_mentions.append(int(line[-11]))
+					sent_mentions.append(int(line[-5]))
+			else:
+				sent_rels.append(line)
+				sent_mentions.append(int(line[-11]))
+				sent_mentions.append(int(line[-5]))
+				
+	def get_rel_features(self, sent_rels, sent_mentions):
+		"""
+		get the feature list for each relation in sent_rels
+		add feature list to set of corpus relations
+		"""
+		for rel in sent_rels:
+			rel_feats = []
 			if self.train:
-				rel_feats.append(line[0])
+				rel_feats.append(rel[0])
 			for f in self.feat_fns:
-				# feature fcns return a list containing the feature(s) it extracts
-				rel_feats += f(line)
+				rel_feats += f(rel)
+			rel_feats += self.mentions_between(rel, sent_mentions)
 			self.relations.append(rel_feats)
+
 
 	def write_output(self):
 		out = open(self.outfile, 'w')
 		for r in self.relations:
-			#print r
 			out.write(' '.join(r) + "\n")
 
 if __name__ == '__main__':
