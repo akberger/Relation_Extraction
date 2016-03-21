@@ -22,6 +22,7 @@ class RelationFeatureExtractor(object):
         self.outfile = outfile
         self.tokenized_sents, self.tok_sents_pos = self.process_tokens_dir(tokens_dir)
         
+        self.clusterdict = self.make_cluster_dict('50mpaths2')
         self.pronouns = ["I", "me", "my", "mine", "myself", "you", "your", "yours", "yourself",
                         "he", "him", "his", "his", "himself", "she", "her", "hers", "herself", 
                         "it", "its", "itself", "we", "us", "our", "ours", "ourselves", "you", "your", 
@@ -45,9 +46,16 @@ class RelationFeatureExtractor(object):
                          self.post_word_pos, #good
                          self.first_word_after_w1, #good
                          self.words_between_POSs, #good 
-                         self.last_word_before_w2
+                         #self.last_word_before_w2
                          ]
-    
+
+    def make_cluster_dict(cfile):
+        clusterdict = {}
+        with open(cfile) as clusters:
+            for line in clusters:
+                clusterdict[line.split()[1]] = line.split()[0]
+        return clusterdict
+
     def process_tokens_dir(self, tokens_dir):
         """
         read in all tokenized files. Arrange in dictionary. 
