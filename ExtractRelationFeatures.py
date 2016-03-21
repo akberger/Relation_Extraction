@@ -212,7 +212,8 @@ class RelationFeatureExtractor(object):
 				sent_rels.append(line)
 				sent_mentions.append(int(line[-11]))
 				sent_mentions.append(int(line[-5]))
-				
+		self.get_rel_features(sent_rels, sent_mentions)
+
 	def get_rel_features(self, sent_rels, sent_mentions):
 		"""
 		get the feature list for each relation in sent_rels
@@ -225,6 +226,7 @@ class RelationFeatureExtractor(object):
 			for f in self.feat_fns:
 				rel_feats += f(rel)
 			rel_feats += self.mentions_between(rel, sent_mentions)
+			#print rel_feats
 			self.relations.append(rel_feats)
 
 

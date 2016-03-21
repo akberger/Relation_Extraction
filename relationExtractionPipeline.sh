@@ -23,7 +23,7 @@ echo ""
 echo "Extracting features from test"
 python /home/g/grad/akberger/relation_extraction/bin/ExtractRelationFeatures.py $TEST $TEST_FEATS $TOKENS
 echo ""
-
+#exit
 echo "Training MaxEnt classifier..."
 bash /home/j/clp/chinese/bin/mallet-maxent-classifier.sh -train -model=$MODEL -gold=$TRAIN_FEATS
 echo ""
