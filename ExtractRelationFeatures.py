@@ -47,6 +47,8 @@ class RelationFeatureExtractor(object):
                          self.first_word_after_w1, #good
                          self.words_between_POSs, #good 
                          #self.last_word_before_w2
+                         self.w1clust,
+                         self.w2clust
                          ]
 
     def make_cluster_dict(self, cfile):
@@ -201,6 +203,20 @@ class RelationFeatureExtractor(object):
         relID, rel_index, w1_index, w2_index = self.get_indices(rel)
         mtns_bwtn = abs(sent_mentions.index(w2_index) - sent_mentions.index(w1_index))
         return ["mtnsbtwn={0}".format(str(mtns_bwtn))]
+
+    def w1clust(self, rel):
+        word = rel[-7].lower()
+        if word in self.clusterdict:
+            return ['w1clust={0}'.format(self.clusterdict[rel[-7].lower()])]
+        else:
+            return ['w1clust=NA']
+
+    def w2clust(self, rel):
+        word = rel[-1].lower()
+        if word in self.clusterdict:
+            return ['w2clust={0}'.format(self.clusterdict[rel[-1].lower()])]
+        else:
+            return ['w2clust=NA']
 
     def featurize(self, parsed_files=None, postagged_files=None):
         """
