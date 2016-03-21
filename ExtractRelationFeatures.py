@@ -45,6 +45,7 @@ class RelationFeatureExtractor(object):
                          self.post_word_pos, #good
                          self.first_word_after_w1, #good
                          self.words_between_POSs, #good 
+                         self.last_word_before_w2
                          ]
     
     def process_tokens_dir(self, tokens_dir):
@@ -73,6 +74,18 @@ class RelationFeatureExtractor(object):
                         d_pos[fID].append(POSs)
 
         return d_words, d_pos
+
+    def process_parses_dir(parses_dir):
+        """ Create dictionary mapping file ids to list of parse trees."""
+        d_parses = defaultdict(list)
+        for filename in os.listdir(parses_dir):
+            fID = '.'.join(os.path.basename(filename).split('.')[:-5])
+            pfile = open(os.path.join(parses_dir, filename))
+            for parse in pfile:
+                parse = parse.strip()
+                if parse:
+                    d_parses[fID].append(parse)
+        return d_parses
 
     def get_indices(self, rel):
         """relation ID, relation sentence index, word1 index, word2 index"""
@@ -170,6 +183,11 @@ class RelationFeatureExtractor(object):
         relID, rel_index, w1_index, w2_index = self.get_indices(rel)
         word = self.tokenized_sents[relID][rel_index][w1_index+1]
         return ["w1pst={0}".format(word)]
+
+    def last_word_before_w2(self, rel):
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        word = self.tokenized_sents[relID][rel_index][w2_index-1]
+        return ["w2prv={}".format(word)]
 
     def mentions_between(self, rel, sent_mentions):
         relID, rel_index, w1_index, w2_index = self.get_indices(rel)
