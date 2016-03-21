@@ -187,7 +187,7 @@ class RelationFeatureExtractor(object):
     def last_word_before_w2(self, rel):
         relID, rel_index, w1_index, w2_index = self.get_indices(rel)
         word = self.tokenized_sents[relID][rel_index][w2_index-1]
-        return ["w2prv={}".format(word)]
+        return ["w2prv={0}".format(word)]
 
     def mentions_between(self, rel, sent_mentions):
         relID, rel_index, w1_index, w2_index = self.get_indices(rel)
