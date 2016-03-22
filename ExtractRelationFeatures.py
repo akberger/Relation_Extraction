@@ -245,9 +245,9 @@ class RelationFeatureExtractor(object):
             word1 = "'s"
         if word2 == "let's":
             word2 = "'s"
-        if word1.endswith("'s"):
+        if word1 != "'s" and word1.endswith("'s"):
             word1 = word1[:-2]
-        if word2.endswith("'s"):
+        if word2 != "'s" and word2.endswith("'s"):
             word2 = word2[:-2]
         if len(word1) > 1:
             if word1[1] == "'":
