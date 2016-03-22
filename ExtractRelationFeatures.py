@@ -17,13 +17,15 @@ class RelationFeatureExtractor(object):
     Output: A file where each line is a list of features for a relation
     """
 
-    def __init__(self, corpus, outfile, tokens_dir, parses_dir, train=False):
+    def __init__(self, corpus, outfile, tokens_dir, parses_dir, depparses_dir,
+                 train=False):
         self.relations = list()
         self.train = train
         self.corpus = corpus
         self.outfile = outfile
         self.tokenized_sents, self.tok_sents_pos = self.process_tokens_dir(tokens_dir)
         self.parses = self.process_parses_dir(parses_dir)
+        self.depparses = self.process_dparses_dir(depparses_dir)
         self.clusterdict = self.make_cluster_dict('50mpaths2')
         self.pronouns = ["I", "me", "my", "mine", "myself", "you", "your", "yours", "yourself",
                         "he", "him", "his", "his", "himself", "she", "her", "hers", "herself", 
@@ -56,8 +58,12 @@ class RelationFeatureExtractor(object):
                          #self.w1suf,
                          #self.w2pref,
                          #self.w2suf,
-                         self.w1bow,
-                         self.w2bow
+                         #self.w1bow,
+                         #self.w2bow
+                         self.et1dw1,
+                         self.et2dw2,
+                         self.h1dw1,
+                         self.h2dw2
                          ]
 
     def make_cluster_dict(self, cfile):
@@ -105,6 +111,20 @@ class RelationFeatureExtractor(object):
                 if parse:
                     d_parses[fID].append(parse)
         return d_parses
+
+    def process_dparses_dir(self, dparses_dir):
+        d_dparses = defaultdict(list)
+        for filename in os.listdir(dparses_dir):
+            fID = '.'.join(os.path.basename(filename).split('.')[:-6])
+            dfile = open(os.path.join(dparses_dir, filename))
+            sent = []
+            for line in dfile:
+                if line != '\n':
+                    sent.append(line)
+                else:
+                    d_dparses[fID].append(sent)
+                    sent = []
+        return d_dparses
 
     def get_indices(self, rel):
         """relation ID, relation sentence index, word1 index, word2 index"""
@@ -246,6 +266,70 @@ class RelationFeatureExtractor(object):
             return ['w2clust={0}'.format(self.clusterdict[word])]
         else:
             return ['w2clust=NA']
+
+    def et1dw1(self, rel):
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        try:
+            depparse = self.depparses[relID][rel_index]
+            depparse = [d.split('\t') for d in depparse]
+            w1 = rel[-7].split('_')[-1]
+            et1 = rel[-9]
+            parse_w1 = [d for d in depparse if d[1] == w1][0]
+            depw1='NA'
+            for w in depparse:
+                if w[-4] == parse_w1[6]:
+                    depw1 = w[1]
+            return ['et1dw1={0}'.format(et1+'-'+depw1)]
+        except:
+            return ['et1dw1=NA']
+
+    def h1dw1(self, rel):
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        try:
+            depparse = self.depparses[relID][rel_index]
+            depparse = [d.split('\t') for d in depparse]
+            w1 = rel[-7].split('_')[-1]
+            parse_w1 = [d for d in depparse if d[1] == w1][0]
+            depw1='NA'
+            for w in depparse:
+                if w[6] == parse_w1[0]:
+                    depw1 = w[1]
+            h1 = depparse[int(parse_w1[6])-1][1]
+            return ['h1dw1={0}'.format(h1+'-'+depw1)]
+        except IndexError:
+            return ['h1dw1=NA']
+
+    def et2dw2(self, rel):
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        try:
+            depparse = self.depparses[relID][rel_index]
+            depparse = [d.split('\t') for d in depparse]
+            w2 = rel[-1].split('_')[-1]
+            et2 = rel[-3]
+            parse_w2 = [d for d in depparse if d[1] == w2][0]
+            depw2='NA'
+            for w in depparse:
+                if w[6] == parse_w2[0]:
+                    depw2 = w[1]
+            return ['et2dw2={0}'.format(et2+'-'+depw2)]
+        except IndexError:
+            return ['et2dw2=NA']
+
+    def h2dw2(self, rel):
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        try:
+            depparse = self.depparses[relID][rel_index]
+            depparse = [d.split('\t') for d in depparse]
+            w2 = rel[-1].split('_')[-1]
+            parse_w2 = [d for d in depparse if d[1] == w2][0]
+            depw2='NA'
+            for w in depparse:
+                if w[-4] == parse_w2[6]:
+                    depw2 = w[1]
+            h2 = depparse[int(parse_w2[6])-1][1]
+            return ['h2dw2={0}'.format(h2+'-'+depw2)]
+        except IndexError:
+            return ['h2dw2=NA']
 
     def tree_path(self, rel):
         """Return the string of labels traversed to get from entity 1 to
@@ -392,7 +476,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         train = True
 
-    erf = RelationFeatureExtractor(corpus, outfile, tokens_dir, parses_dir, train)
+    erf = RelationFeatureExtractor(corpus, outfile, tokens_dir, parses_dir,
+                                   dparses_dir, train)
     erf.featurize()
     erf.write_output()
 
