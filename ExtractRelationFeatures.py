@@ -122,11 +122,11 @@ class RelationFeatureExtractor(object):
 
     def w1bow(self, rel):
         bow = set(rel[-7].split('_'))
-        return ['w1bow={0}'.format(' '.join(bow))
+        return ['w1bow={0}'.format(' '.join(bow))]
 
     def w2bow(self, rel):
         bow = set(rel[-1].split('_'))
-        return ['w2bow={0}'.format(' '.join(bow))
+        return ['w2bow={0}'.format(' '.join(bow))]
 
     def w1pref(self, rel):
         return ["w1pref={0}".format(rel[-7][:3])]
