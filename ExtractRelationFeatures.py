@@ -51,7 +51,11 @@ class RelationFeatureExtractor(object):
                          #self.last_word_before_w2
                          self.w1clust, #good
                          self.w2clust, #good
-                         self.tree_path,
+                         self.tree_path
+                         self.w1pref,
+                         self.w1suf,
+                         self.w2pref,
+                         self.w2suf
                          ]
 
     def make_cluster_dict(self, cfile):
@@ -113,6 +117,18 @@ class RelationFeatureExtractor(object):
         """
         return ["w1={0}".format(rel[-7]), "w2={0}".format(rel[-1])]
         #return ["wds={0}-{1}".format(rel[-7], rel[-1])]
+
+    def w1pref(self, rel):
+        return ["w1pref={0}".format(rel[-7][:3])]
+
+    def w1suf(self, rel):
+        return ["w1suf={0}".format(rel[-7][-3:])]
+
+    def w2pref(self, rel):
+        return ["w2pref={0}".format(rel[-1][:3])]
+
+    def w2suf(self, rel):
+        return ["w1suf={0}".format(rel[-1][-3:])]
 
     def word_types(self, rel):
         """extracts the type of the words in the relation"""
