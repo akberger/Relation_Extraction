@@ -18,7 +18,7 @@ README=$7
 PARSES=$8
 DPARSES=$9
 
-export $PY27=$HOME/python/Python-2.7.9/python
+PY27=$HOME/python/Python-2.7.9/python
 
 echo "Extracting features from training"
 $PY27 /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TRAIN $TRAIN_FEATS $TOKENS $PARSES $DPARSES train
