@@ -52,10 +52,12 @@ class RelationFeatureExtractor(object):
                          self.w1clust, #good
                          self.w2clust, #good
                          self.tree_path,
-                         self.w1pref,
-                         self.w1suf,
-                         self.w2pref,
-                         self.w2suf
+                         #self.w1pref, #bad
+                         #self.w1suf,
+                         #self.w2pref,
+                         #self.w2suf,
+                         self.w1bow,
+                         self.w2bow
                          ]
 
     def make_cluster_dict(self, cfile):
@@ -117,6 +119,14 @@ class RelationFeatureExtractor(object):
         """
         return ["w1={0}".format(rel[-7]), "w2={0}".format(rel[-1])]
         #return ["wds={0}-{1}".format(rel[-7], rel[-1])]
+
+    def w1bow(self, rel):
+        bow = set(rel[-7].split('_'))
+        return ['w1bow={0}'.format(' '.join(bow))
+
+    def w2bow(self, rel):
+        bow = set(rel[-1].split('_'))
+        return ['w2bow={0}'.format(' '.join(bow))
 
     def w1pref(self, rel):
         return ["w1pref={0}".format(rel[-7][:3])]
