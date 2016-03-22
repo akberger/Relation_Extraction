@@ -51,7 +51,7 @@ class RelationFeatureExtractor(object):
                          #self.last_word_before_w2
                          self.w1clust, #good
                          self.w2clust, #good
-                         self.tree_path
+                         self.tree_path,
                          self.w1pref,
                          self.w1suf,
                          self.w2pref,
