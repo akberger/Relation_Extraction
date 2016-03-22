@@ -4,8 +4,10 @@ Format data for MaxEnt classifer
 """
 import sys
 import os
+from itertools import groupby
 from collections import defaultdict
 from nltk.corpus import gazetteers, names
+from nltk.tree import ParentedTree
 
 class RelationFeatureExtractor(object):
     """
@@ -47,8 +49,9 @@ class RelationFeatureExtractor(object):
                          self.first_word_after_w1, #good
                          self.words_between_POSs, #good 
                          #self.last_word_before_w2
-                         self.w1clust,
-                         self.w2clust
+                         self.w1clust, #good
+                         self.w2clust, #good
+                         self.tree_path,
                          ]
 
     def make_cluster_dict(self, cfile):
@@ -205,18 +208,63 @@ class RelationFeatureExtractor(object):
         return ["mtnsbtwn={0}".format(str(mtns_bwtn))]
 
     def w1clust(self, rel):
-        word = rel[-7].lower()
+        word = rel[-7].lower().split('_')[-1]
         if word in self.clusterdict:
-            return ['w1clust={0}'.format(self.clusterdict[rel[-7].lower()])]
+            return ['w1clust={0}'.format(self.clusterdict[word])]
         else:
             return ['w1clust=NA']
 
     def w2clust(self, rel):
-        word = rel[-1].lower()
+        word = rel[-1].lower().split('_')[-1]
         if word in self.clusterdict:
-            return ['w2clust={0}'.format(self.clusterdict[rel[-1].lower()])]
+            return ['w2clust={0}'.format(self.clusterdict[word])]
         else:
             return ['w2clust=NA']
+
+    def tree_path(self, rel):
+        """Return the string of labels traversed to get from entity 1 to
+        entity 2 in the parse tree. Ignores consecutive duplicates."""
+        relID, rel_index, w1_index, w2_index = self.get_indices(rel)
+        word1 = rel[-7]
+        word2 = rel[-1]
+        word1 = word1.split('_')[-1]
+        word2 = word2.split('_')[-1]
+        tree = self.parses[relID][rel_index]
+        ptree = ParentedTree.fromstring(tree)
+        print word1, word2
+        print ptree
+        if word1.startswith('('):
+            word1 = word1[1:]
+        if word2.startswith('('):
+            word2 = word2[1:]
+        if word1.startswith('``'):
+            word1 = word1[2:]
+        if word2.startswith('``'):
+            word2 = word2[2:]
+        if word1 == "let's":
+            word1 = "'s"
+        if word2 == "let's":
+            word2 = "'s"
+        if word1.endswith("'s"):
+            word1 = word1[:-2]
+        if word2.endswith("'s"):
+            word2 = word2[:-2]
+        if len(word1) > 1:
+            if word1[1] == "'":
+                word1 = word1[2:]
+        if len(word2) > 1:
+            if word2[1] == "'":
+                word2 = word2[2:]
+        if "&AMP;" in word1:
+            word1 = word1[:word1.index(';')]
+        if "&AMP;" in word2:
+            word2 = word2[:word2.index(';')]
+        if word1.endswith('!'):
+            word1 = word1[:-1]
+        if word2.endswith('!'):
+            word2 = word2[:-1]
+        path = [label[0] for label in groupby(find_path(ptree, word1, word2))]
+        return ['path={0}'.format(''.join(path))]
 
     def featurize(self, parsed_files=None, postagged_files=None):
         """
@@ -271,11 +319,43 @@ class RelationFeatureExtractor(object):
             #print rel_feats
             self.relations.append(rel_feats)
 
+#http://stackoverflow.com/a/28750205/5818736
+def get_lca_length(location1, location2):
+    i = 0
+    while i < len(location1) and i < len(location2) and location1[i] == location2[i]:
+        i+=1
+    return i
+
+def get_labels_from_lca(ptree, lca_len, location):
+    labels = []
+    for i in range(lca_len, len(location)):
+        labels.append(ptree[location[:i]].label())
+    return labels
+
+def find_path(ptree, text1, text2):
+    leaf_values = ptree.leaves()
+    leaf_index1 = leaf_values.index(text1)
+    leaf_index2 = leaf_values.index(text2)
+    location1 = ptree.leaf_treeposition(leaf_index1)
+    location2 = ptree.leaf_treeposition(leaf_index2)
+    #find length of least common ancestor (lca)
+    lca_len = get_lca_length(location1, location2)
+    #find path from the node1 to lca
+    labels1 = get_labels_from_lca(ptree, lca_len, location1)
+    #ignore the first element, because it will be counted in the second part of the path
+    result = labels1[1:]
+    #inverse, because we want to go from the node to least common ancestor
+    result = result[::-1]
+    #add path from lca to node2
+    result = result + get_labels_from_lca(ptree, lca_len, location2)
+    return result
+
 
     def write_output(self):
         out = open(self.outfile, 'w')
         for r in self.relations:
             out.write(' '.join(r) + "\n")
+
 
 if __name__ == '__main__':
     corpus = sys.argv[1]
