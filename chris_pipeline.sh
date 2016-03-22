@@ -18,12 +18,14 @@ README=$7
 PARSES=$8
 DPARSES=$9
 
+export $PY27=$HOME/python/Python-2.7.9/python
+
 echo "Extracting features from training"
-python27 /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TRAIN $TRAIN_FEATS $TOKENS $PARSES $DPARSES train
+$PY27 /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TRAIN $TRAIN_FEATS $TOKENS $PARSES $DPARSES train
 echo ""
 #exit
 echo "Extracting features from test"
-python27 /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TEST $TEST_FEATS $TOKENS $PARSES $DPARSES
+$PY27 /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TEST $TEST_FEATS $TOKENS $PARSES $DPARSES
 echo ""
 #exit
 echo "Training MaxEnt classifier..."
