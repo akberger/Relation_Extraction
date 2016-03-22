@@ -15,13 +15,15 @@ MODEL=$4
 GOLD=$5
 MESSAGE=$6
 README=$7
+PARSES=$8
+DPARSES=$9
 
 echo "Extracting features from training"
-python /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TRAIN $TRAIN_FEATS $TOKENS train
+python /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TRAIN $TRAIN_FEATS $TOKENS $PARSES $DPARSES train
 echo ""
 #exit
 echo "Extracting features from test"
-python /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TEST $TEST_FEATS $TOKENS
+python /home/g/grad/cmward/Relation_Extraction/ExtractRelationFeatures.py $TEST $TEST_FEATS $TOKENS $PARSES $DPARSES
 echo ""
 #exit
 echo "Training MaxEnt classifier..."

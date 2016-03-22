@@ -15,13 +15,13 @@ class RelationFeatureExtractor(object):
     Output: A file where each line is a list of features for a relation
     """
 
-    def __init__(self, corpus, outfile, tokens_dir, train=False):
+    def __init__(self, corpus, outfile, tokens_dir, parses_dir, train=False):
         self.relations = list()
         self.train = train
         self.corpus = corpus
         self.outfile = outfile
         self.tokenized_sents, self.tok_sents_pos = self.process_tokens_dir(tokens_dir)
-        
+        self.parses = self.process_parses_dir(parses_dir)
         self.clusterdict = self.make_cluster_dict('50mpaths2')
         self.pronouns = ["I", "me", "my", "mine", "myself", "you", "your", "yours", "yourself",
                         "he", "him", "his", "his", "himself", "she", "her", "hers", "herself", 
@@ -85,7 +85,7 @@ class RelationFeatureExtractor(object):
 
         return d_words, d_pos
 
-    def process_parses_dir(parses_dir):
+    def process_parses_dir(self, parses_dir):
         """ Create dictionary mapping file ids to list of parse trees."""
         d_parses = defaultdict(list)
         for filename in os.listdir(parses_dir):
@@ -281,11 +281,13 @@ if __name__ == '__main__':
     corpus = sys.argv[1]
     outfile = sys.argv[2]
     tokens_dir = sys.argv[3]
+    parses_dir = sys.argv[4]
+    dparses_dir = sys.argv[5]
     train = False
     if len(sys.argv) > 3:
         train = True
 
-    erf = RelationFeatureExtractor(corpus, outfile, tokens_dir, train)
+    erf = RelationFeatureExtractor(corpus, outfile, tokens_dir, parses_dir, train)
     erf.featurize()
     erf.write_output()
 
