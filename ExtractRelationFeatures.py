@@ -231,8 +231,6 @@ class RelationFeatureExtractor(object):
         word2 = word2.split('_')[-1]
         tree = self.parses[relID][rel_index]
         ptree = ParentedTree.fromstring(tree)
-        print word1, word2
-        print ptree
         if word1.startswith('('):
             word1 = word1[1:]
         if word2.startswith('('):
