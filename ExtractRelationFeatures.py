@@ -231,8 +231,6 @@ class RelationFeatureExtractor(object):
         word2 = word2.split('_')[-1]
         tree = self.parses[relID][rel_index]
         ptree = ParentedTree.fromstring(tree)
-        print word1,word2
-        print ptree
         if word1.startswith('('):
             word1 = word1[1:]
         if word2.startswith('('):
@@ -319,6 +317,11 @@ class RelationFeatureExtractor(object):
             #print rel_feats
             self.relations.append(rel_feats)
 
+    def write_output(self):
+        out = open(self.outfile, 'w')
+        for r in self.relations:
+            out.write(' '.join(r) + "\n")
+
 #http://stackoverflow.com/a/28750205/5818736
 def get_lca_length(location1, location2):
     i = 0
@@ -351,10 +354,6 @@ def find_path(ptree, text1, text2):
     return result
 
 
-    def write_output(self):
-        out = open(self.outfile, 'w')
-        for r in self.relations:
-            out.write(' '.join(r) + "\n")
 
 
 if __name__ == '__main__':
